@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<annotation>
+    <folder></folder>
+    <filename>VitaSoyOriginal_1941</filename>
+    <path>Data/VitaSoyOriginal/VitaSoyOriginal_1941.xml</path>
+    <source>
+        <database>Unknown</database>
+    </source>
+    <size>
+        <width>720</width>
+        <height>1280</height>
+        <depth>3</depth>
+    </size>
+    <segmented>0</segmented>
+    <object>
+        <name>VitaSoyOriginal</name>
+        <pose>Unspecified</pose>
+        <truncated>0</truncated>
+        <difficult>0</difficult>
+        <bndbox>
+            <xmin>379</xmin>
+            <ymin>696</ymin>
+            <xmax>550</xmax>
+            <ymax>831</ymax>
+        </bndbox>
+    </object>
+</annotation>
