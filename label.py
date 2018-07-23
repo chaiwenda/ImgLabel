@@ -995,7 +995,7 @@ class MainWindow(QMainWindow, WindowMixin):
         # Tzutalin 20160906 : Add file list and dock to move faster
         # Highlight the file item
         if unicodeFilePath and self.fileListWidget.count() > 0:
-            index = self.mImgList.index(unicodeFilePath)
+            index = self.mImgList.index(str(unicodeFilePath))
             fileWidgetItem = self.fileListWidget.item(index)
             fileWidgetItem.setSelected(True)
 
@@ -1265,8 +1265,8 @@ class MainWindow(QMainWindow, WindowMixin):
         # print(self.mImgList)  # mImgList:获取的图片地址，包含已删除的图片
         # print(self.filePath)  # filePath:已删除的图片
         # print("输出mImgList结束")
-        print("===================self.myList=================")
-        print(self.mImgList)
+        # print("===================self.myList=================")
+        # print(self.mImgList)
         filename = None
         currIndex = 0  # 记录当前照片所在下标
         for i in range(len(self.mImgList)):
@@ -1280,12 +1280,12 @@ class MainWindow(QMainWindow, WindowMixin):
             i = 1
             while os.path.exists(self.mImgList[currIndex - i]) == False:
                 i = i + 1
+            # print("下一张函数下标是？")
+            # print(currIndex - i)
             filename = self.mImgList[currIndex - i]
-            # self.loadFile("F:/QtPython/ImgLabel/image/VitaSoyOriginal_2091.jpg")
-        if filename:
-            # self.loadFile("F:/QtPython/ImgLabel/image/VitaSoyOriginal_2091.jpg")
-        print("上一张图片函数结束")
-
+            if os.path.exists(filename):
+                self.loadFile(filename)
+        # print("上一张图片函数结束")
 
 
     # 下一张图片
@@ -1574,7 +1574,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.set_format(FORMAT_YOLO)
         tYoloParseReader = YoloReader(txtPath, self.image)
         shapes = tYoloParseReader.getShapes()
-        print (shapes)
+        # print (shapes)
         self.loadLabels(shapes)
         self.canvas.verified = tYoloParseReader.verified
 
