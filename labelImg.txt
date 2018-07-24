@@ -1,3 +1,16 @@
 @echo off
 pyrcc5 -o resources.py resources.qrc
 python labelImg.py
+
+编译：pyinstaller --hidden-import=queue -c -w -F labelImg.py
+
+问题：failed to execute script
+
+报错原因：中文编码问题
+
+参考解决将文件编码设置成‘utf-8’
+
+
+
+
+
