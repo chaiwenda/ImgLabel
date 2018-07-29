@@ -1,23 +1,3 @@
-# import os
-#
-# outputdir = "F:\labelImg-master\image\VitaSoyOriginal_1997.jpg"
-# index = outputdir.rfind('\\')
-# print('\下标是')
-# print(index)
-# fname = outputdir[index+1:]
-# fpath = outputdir[:index+1]
-# index1 = fname.rfind('.')
-# fname_no_suffix = fname[:index1]
-# print("输出照片名称")
-# print(fname)
-#
-# print("输出当前绝对路径")
-# print(fpath)
-#
-# print("输出照片名称不带后缀")
-# print(fname_no_suffix)
-
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import codecs
 import distutils.spawn
@@ -44,6 +24,7 @@ except ImportError:
     # http://stackoverflow.com/questions/21217399/pyqt4-qtcore-qvariant-object-instead-of-a-string
     if sys.version_info.major >= 3:
         import sip
+
         sip.setapi('QVariant', 2)
     from PyQt4.QtGui import *
     from PyQt4.QtCore import *
@@ -69,11 +50,13 @@ from libs.version import __version__
 
 __appname__ = 'labelImg'
 
+
 # Utility functions and classes.
 
 def have_qstring():
     '''p3/qt5 get rid of QString wrapper as py3 has native unicode str type'''
     return not (sys.version_info.major >= 3 or QT_VERSION_STR.startswith('5.'))
+
 
 def util_qt_strlistclass():
     return QStringList if have_qstring() else list
@@ -81,7 +64,7 @@ def util_qt_strlistclass():
 
 class WindowMixin(object):
 
-    def menu(self, title, actions=None): #定义菜单列表
+    def menu(self, title, actions=None):  # 定义菜单列表
         menu = self.menuBar().addMenu(title)
         if actions:
             addActions(menu, actions)
@@ -96,7 +79,6 @@ class WindowMixin(object):
             addActions(toolbar, actions)
         self.addToolBar(Qt.LeftToolBarArea, toolbar)
         return toolbar
-
 
 
 # PyQt5: TypeError: unhashable type: 'QListWidgetItem'
@@ -126,18 +108,17 @@ class MainWindow(QMainWindow, WindowMixin):
         self.usingPascalVocFormat = True
         self.usingYoloFormat = False
 
-        # For loading all image under a directory
-        # 在根目录下加载所有的图片
         self.mImgList = []
         self.dirname = None
         self.labelHist = []
         self.lastOpenDir = None
-        self.fname_dir = ''  # 临时文件名+文件路径
-        self.delete_file_name = ''  # 当用open打开时再点击删除时所用到的变量）删除文件名（
-        self.fname = ''  # 临时文件名
-        self.fpath = ''  # 临时文件路径
-        self.fname_no_suffix = ''  # 临时文件名无后缀
-        self.fpath_prevImg = '' #前一张图片函数变量引用
+        self.fname_dir = ''
+        self.delete_file_name = ''
+        self.delete_file_list_names = []
+        self.fname = ''
+        self.fpath = ''
+        self.fname_no_suffix = ''
+        self.fpath_prevImg = ''
 
         # Whether we need to save or not.
         self.dirty = False
@@ -150,7 +131,7 @@ class MainWindow(QMainWindow, WindowMixin):
         # Load predefined classes to the list
         self.loadPredefinedClasses(defaultPrefdefClassFile)
 
-        # Main widgets and related state. #标签
+        # Main widgets and related state.
         self.labelDialog = LabelDialog(parent=self, listItem=self.labelHist)
 
         self.itemsToShapes = {}
@@ -244,9 +225,11 @@ class MainWindow(QMainWindow, WindowMixin):
         quit = action('&Quit', self.close,
                       'Ctrl+Q', 'quit', u'Quit application')
 
-        open = action('&delete image', self.deleteFile,
-                      'Q', 'delete', u'delete image')
-        open1 = action('&Open', self.openFile,
+        Delete = action('&delete image ', self.deleteFile,
+                        'Q', 'delete', u'append useless image into lists')
+        DeleteFile = action('&Confirm the deletion', self.ConfirmDeleteFiles,
+                            'G', 'delete', u'Confirm the deletion')
+        open = action('&Open', self.openFile,
                       'Ctrl+O', 'open', u'Open image or label file')
 
         opendir = action('&Open Dir', self.openDirDialog,
@@ -271,7 +254,7 @@ class MainWindow(QMainWindow, WindowMixin):
                       'Ctrl+S', 'save', u'Save labels to file', enabled=False)
 
         save_format = action('&PascalVOC', self.change_format,
-                      'Ctrl+', 'format_voc', u'Change save format', enabled=True)
+                             'Ctrl+', 'format_voc', u'Change save format', enabled=True)
 
         saveAs = action('&Save As', self.saveFileAs,
                         'Ctrl+Shift+S', 'save-as', u'Save labels to a different file', enabled=False)
@@ -365,7 +348,8 @@ class MainWindow(QMainWindow, WindowMixin):
             self.popLabelListMenu)
 
         # Store actions for further handling.
-        self.actions = struct(save=save, save_format=save_format, saveAs=saveAs, open=open1, close=close, resetAll = resetAll,
+        self.actions = struct(save=save, save_format=save_format, saveAs=saveAs, open=open, close=close,
+                              resetAll=resetAll,
                               lineColor=color1, create=create, delete=delete, edit=edit, copy=copy,
                               createMode=createMode, editMode=editMode, advancedMode=advancedMode,
                               shapeLineColor=shapeLineColor, shapeFillColor=shapeFillColor,
@@ -373,7 +357,7 @@ class MainWindow(QMainWindow, WindowMixin):
                               fitWindow=fitWindow, fitWidth=fitWidth,
                               zoomActions=zoomActions,
                               fileMenuActions=(
-                                  open, opendir, save,open1, saveAs, close, resetAll, quit),
+                                  Delete, opendir, save, open, saveAs, close, resetAll, quit, DeleteFile),
                               beginner=(), advanced=(),
                               editMenu=(edit, copy, delete,
                                         None, color1),
@@ -384,7 +368,7 @@ class MainWindow(QMainWindow, WindowMixin):
                                   close, create, createMode, editMode),
                               onShapesPresent=(saveAs, hideAll, showAll))
 
-        self.menus = struct(    # Menu File Edit View Help
+        self.menus = struct(  # Menu File Edit View Help
             file=self.menu('&File'),
             edit=self.menu('&Edit'),
             view=self.menu('&View'),
@@ -410,7 +394,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.paintLabelsOption.triggered.connect(self.togglePaintLabelsOption)
 
         addActions(self.menus.file,
-                   (open1, open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
+                   (open, Delete, DeleteFile, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save,
+                    save_format, saveAs, close, resetAll, quit))
         addActions(self.menus.help, (help, showInfo))
         addActions(self.menus.view, (
             self.autoSaving,
@@ -431,11 +416,12 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (
-            open1, open, opendir, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
+            open, Delete, DeleteFile, opendir, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None,
+            create, copy, delete, None,
             zoomIn, zoom, zoomOut, fitWindow, fitWidth)
 
         self.actions.advanced = (
-            open1, open, opendir, changeSavedir, openNextImg, openPrevImg, save, save_format, None,
+            open, Delete, DeleteFile, opendir, changeSavedir, openNextImg, openPrevImg, save, save_format, None,
             createMode, editMode, None,
             hideAll, showAll)
 
@@ -529,8 +515,10 @@ class MainWindow(QMainWindow, WindowMixin):
             LabelFile.suffix = TXT_EXT
 
     def change_format(self):
-        if self.usingPascalVocFormat: self.set_format(FORMAT_YOLO)
-        elif self.usingYoloFormat: self.set_format(FORMAT_PASCALVOC)
+        if self.usingPascalVocFormat:
+            self.set_format(FORMAT_YOLO)
+        elif self.usingYoloFormat:
+            self.set_format(FORMAT_PASCALVOC)
 
     def noShapes(self):
         return not self.itemsToShapes
@@ -557,7 +545,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.menus[0].clear()
         addActions(self.canvas.menus[0], menu)
         self.menus.edit.clear()
-        actions = (self.actions.create,) if self.beginner()\
+        actions = (self.actions.create,) if self.beginner() \
             else (self.actions.createMode, self.actions.editMode)
         addActions(self.menus.edit, actions + self.actions.editMenu)
 
@@ -672,6 +660,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         def exists(filename):
             return os.path.exists(filename)
+
         menu = self.menus.recentFiles
         menu.clear()
         files = [f for f in self.recentFiles if f !=
@@ -705,15 +694,15 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.loadFile(filename)
 
     # Add chris
-    def btnstate(self, item= None):
+    def btnstate(self, item=None):
         """ Function to handle difficult examples
         Update on each object """
         if not self.canvas.editing():
             return
 
         item = self.currentItem()
-        if not item: # If not selected Item, take the first one
-            item = self.labelList.item(self.labelList.count()-1)
+        if not item:  # If not selected Item, take the first one
+            item = self.labelList.item(self.labelList.count() - 1)
 
         difficult = self.diffcButton.isChecked()
 
@@ -803,8 +792,8 @@ class MainWindow(QMainWindow, WindowMixin):
                         line_color=s.line_color.getRgb(),
                         fill_color=s.fill_color.getRgb(),
                         points=[(p.x(), p.y()) for p in s.points],
-                       # add chris
-                        difficult = s.difficult)
+                        # add chris
+                        difficult=s.difficult)
 
         shapes = [format_shape(shape) for shape in self.canvas.shapes]
         # Can add differrent annotation formats here
@@ -812,15 +801,15 @@ class MainWindow(QMainWindow, WindowMixin):
             if self.usingPascalVocFormat is True:
                 if ustr(annotationFilePath[-4:]) != ".xml":
                     annotationFilePath += XML_EXT
-                print ('Img: ' + self.filePath + ' -> Its xml: ' + annotationFilePath)
+                print('Img: ' + self.filePath + ' -> Its xml: ' + annotationFilePath)
                 self.labelFile.savePascalVocFormat(annotationFilePath, shapes, self.filePath, self.imageData,
                                                    self.lineColor.getRgb(), self.fillColor.getRgb())
             elif self.usingYoloFormat is True:
                 if annotationFilePath[-4:] != ".txt":
                     annotationFilePath += TXT_EXT
-                print ('Img: ' + self.filePath + ' -> Its txt: ' + annotationFilePath)
+                print('Img: ' + self.filePath + ' -> Its txt: ' + annotationFilePath)
                 self.labelFile.saveYoloFormat(annotationFilePath, shapes, self.filePath, self.imageData, self.labelHist,
-                                                   self.lineColor.getRgb(), self.fillColor.getRgb())
+                                              self.lineColor.getRgb(), self.fillColor.getRgb())
             else:
                 self.labelFile.save(annotationFilePath, shapes, self.filePath, self.imageData,
                                     self.lineColor.getRgb(), self.fillColor.getRgb())
@@ -978,7 +967,6 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def loadFile(self, filePath=None):
         """Load the specified file, or the last opened file if None."""
-        # print("加载文件函数开始")
         self.resetState()
         self.canvas.setEnabled(False)
         if filePath is None:
@@ -987,15 +975,11 @@ class MainWindow(QMainWindow, WindowMixin):
         # Make sure that filePath is a regular python string, rather than QString
         filePath = ustr(filePath)
         self.fname_dir = filePath
-        #test 11：28
-        # print("加载函数 step1  " + filePath)
-
-
         unicodeFilePath = ustr(filePath)
         # Tzutalin 20160906 : Add file list and dock to move faster
         # Highlight the file item
         if unicodeFilePath and self.fileListWidget.count() > 0:
-            index = self.mImgList.index(unicodeFilePath)
+            index = self.mImgList.index(str(unicodeFilePath))
             fileWidgetItem = self.fileListWidget.item(index)
             fileWidgetItem.setSelected(True)
 
@@ -1067,17 +1051,16 @@ class MainWindow(QMainWindow, WindowMixin):
 
             # Default : select last item if there is at least one item
             if self.labelList.count():
-                self.labelList.setCurrentItem(self.labelList.item(self.labelList.count()-1))
-                self.labelList.item(self.labelList.count()-1).setSelected(True)
+                self.labelList.setCurrentItem(self.labelList.item(self.labelList.count() - 1))
+                self.labelList.item(self.labelList.count() - 1).setSelected(True)
 
             self.canvas.setFocus(True)
-            print("加载文件函数结束")
             return True
         return False
 
     def resizeEvent(self, event):
-        if self.canvas and not self.image.isNull()\
-           and self.zoomMode != self.MANUAL_ZOOM:
+        if self.canvas and not self.image.isNull() \
+                and self.zoomMode != self.MANUAL_ZOOM:
             self.adjustScale()
         super(MainWindow, self).resizeEvent(event)
 
@@ -1139,6 +1122,7 @@ class MainWindow(QMainWindow, WindowMixin):
         settings[SETTING_SINGLE_CLASS] = self.singleClassMode.isChecked()
         settings[SETTING_PAINT_LABEL] = self.paintLabelsOption.isChecked()
         settings.save()
+
     ## User Dialogs ##
 
     def loadRecent(self, filename):
@@ -1165,8 +1149,9 @@ class MainWindow(QMainWindow, WindowMixin):
             path = '.'
 
         dirpath = ustr(QFileDialog.getExistingDirectory(self,
-                                                       '%s - Save annotations to the directory' % __appname__, path,  QFileDialog.ShowDirsOnly
-                                                       | QFileDialog.DontResolveSymlinks))
+                                                        '%s - Save annotations to the directory' % __appname__, path,
+                                                        QFileDialog.ShowDirsOnly
+                                                        | QFileDialog.DontResolveSymlinks))
 
         if dirpath is not None and len(dirpath) > 1:
             self.defaultSaveDir = dirpath
@@ -1181,11 +1166,11 @@ class MainWindow(QMainWindow, WindowMixin):
             self.statusBar().show()
             return
 
-        path = os.path.dirname(ustr(self.filePath))\
+        path = os.path.dirname(ustr(self.filePath)) \
             if self.filePath else '.'
         if self.usingPascalVocFormat:
             filters = "Open Annotation XML file (%s)" % ' '.join(['*.xml'])
-            filename = ustr(QFileDialog.getOpenFileName(self,'%s - Choose a xml file' % __appname__, path, filters))
+            filename = ustr(QFileDialog.getOpenFileName(self, '%s - Choose a xml file' % __appname__, path, filters))
             if filename:
                 if isinstance(filename, (tuple, list)):
                     filename = filename[0]
@@ -1202,13 +1187,10 @@ class MainWindow(QMainWindow, WindowMixin):
             defaultOpenDirPath = os.path.dirname(self.filePath) if self.filePath else '.'
 
         targetDirPath = ustr(QFileDialog.getExistingDirectory(self,
-                                                     '%s - Open Directory' % __appname__, defaultOpenDirPath,
-                                                     QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
+                                                              '%s - Open Directory' % __appname__, defaultOpenDirPath,
+                                                              QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
         self.importDirImages(targetDirPath)
         self.fpath_prevImg = targetDirPath
-        # print("===============opendir start===============")
-        # print(targetDirPath)
-        # print("=================opendir end================")
 
     def importDirImages(self, dirpath):
         if not self.mayContinue() or not dirpath:
@@ -1216,10 +1198,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.lastOpenDir = dirpath
         self.dirname = dirpath
-        print("打开文件函数地址为开始")
-        self.fpath = self.dirname  #当打开文件地址是记录下来 初始状态为：''
-        print(self.dirname)
-        print("打开文件函数地址为结束")
+        self.fpath = self.dirname
         self.filePath = None
         self.fileListWidget.clear()
         self.mImgList = self.scanAllImages(dirpath)
@@ -1230,7 +1209,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def verifyImg(self, _value=False):
         # Proceding next image without dialog if having any label
-         if self.filePath is not None:
+        if self.filePath is not None:
             try:
                 self.labelFile.toggleVerify()
             except AttributeError:
@@ -1245,6 +1224,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.canvas.verified = self.labelFile.verified
             self.paintCanvas()
             self.saveFile()
+
     # 上一张图片
     def openPrevImg(self, _value=False):
         if self.autoSaving.isChecked():
@@ -1260,33 +1240,18 @@ class MainWindow(QMainWindow, WindowMixin):
 
         if len(self.mImgList) <= 0:
             return
-
-        # print("输出mImgList开始")
-        # print(self.mImgList)  # mImgList:获取的图片地址，包含已删除的图片
-        # print(self.filePath)  # filePath:已删除的图片
-        # print("输出mImgList结束")
-        print("===================self.myList=================")
-        print(self.mImgList)
         filename = None
         currIndex = 0  # 记录当前照片所在下标
         for i in range(len(self.mImgList)):
             if self.mImgList[i] == self.filePath:
                 currIndex = i
-        # print("下一张图片函数当前坐标是：")
-        # print(currIndex)
-        # print("下一张图片函数当前坐标输出结束：")
-
-        if currIndex >= 1 :
+        if currIndex >= 1:
             i = 1
             while os.path.exists(self.mImgList[currIndex - i]) == False:
                 i = i + 1
             filename = self.mImgList[currIndex - i]
-            # self.loadFile("F:/QtPython/ImgLabel/image/VitaSoyOriginal_2091.jpg")
-        if filename:
-            # self.loadFile("F:/QtPython/ImgLabel/image/VitaSoyOriginal_2091.jpg")
-        print("上一张图片函数结束")
-
-
+            if os.path.exists(filename):
+                self.loadFile(filename)
 
     # 下一张图片
     def openNextImg(self, _value=False):
@@ -1305,19 +1270,11 @@ class MainWindow(QMainWindow, WindowMixin):
         if len(self.mImgList) <= 0:
             return
 
-        # print("输出mImgList开始")
-        # print(self.mImgList)  # mImgList:获取的图片地址，包含已删除的图片
-        # print(self.filePath)  # filePath:已删除的图片
-        # print("输出mImgList结束")
-
         filename = None
         currIndex = 0  # 记录当前照片所在下标
         for i in range(len(self.mImgList)):
             if self.mImgList[i] == self.filePath:
                 currIndex = i
-        # print("下一张图片函数当前坐标是：")
-        # print(currIndex)
-        # print("下一张图片函数当前坐标输出结束：")
         if currIndex <= len(self.mImgList) - 2:
             i = 1
             while os.path.exists(self.mImgList[currIndex + i]) == False:
@@ -1327,10 +1284,8 @@ class MainWindow(QMainWindow, WindowMixin):
         if filename:
             self.loadFile(filename)
 
-
     # 打开图片
     def openFile(self, _value=False):
-        # print("打开图片函数开始")
         if not self.mayContinue():
             return
         path = os.path.dirname(ustr(self.filePath)) if self.filePath else '.'
@@ -1341,11 +1296,17 @@ class MainWindow(QMainWindow, WindowMixin):
             if isinstance(filename, (tuple, list)):
                 filename = filename[0]
             self.loadFile(filename)
-            # print("文件打开的路径是：")
-            # print(filename)
             self.delete_file_name = filename
-            # print("打开图片函数结束")
 
+    def ConfirmDeleteFiles(self, _value=False):
+        i = 0
+        for delete_file_list_name in self.delete_file_list_names:
+            if os.path.exists(delete_file_list_name):
+                os.remove(delete_file_list_name)
+                i += 1
+        print("the number of delete file is " + str(i))
+        if i == 0:
+            print("Delete List is null  ")
 
     def deleteFile(self, _value=False):
         if self.delete_file_name == '' and self.fname_dir == '':
@@ -1354,81 +1315,47 @@ class MainWindow(QMainWindow, WindowMixin):
             index2 = self.delete_file_name.rfind('/')
             index3 = self.delete_file_name.rfind('.')
             if os.path.exists(self.delete_file_name):
-                os.remove(self.delete_file_name)
-            # print("删除图片下标step1是")
-            # print(index2)
+                # os.remove(self.delete_file_name)
+                self.delete_file_list_names.append(self.delete_file_name)
             file_path = self.delete_file_name[:index2]
             file_path2 = self.delete_file_name[:index3]  # xml file delete
             if os.path.exists(file_path2 + '.xml'):
-                os.remove(file_path2 + '.xml')
-            # print("删除图片路径step1是")
-            # print(file_path)
-            # print("删除图片step1")
+                self.delete_file_list_names.append(file_path2 + '.xml')
+                # os.remove(file_path2 + '.xml')
             self.delete_file_name = ''
             self.loadFile("")
 
         else:
-            # print("打开图片函数=获取文件绝对路径地址：")
-            # print(self.fname_dir)
-
             index = self.fname_dir.rfind('\\')
-            # print('\下标是')
-            # print(index)
             self.fname = self.fname_dir[index + 1:]
             self.fpath = self.fname_dir[:index + 1]
             self.fpath_no = self.fname_dir[:index]
             index1 = self.fname.rfind('.')
             self.fname_dir = ''
             self.fname_no_suffix = self.fname[:index1]
-
-            # print("打开图片函数=获取文件名：")
-            # print(self.fname)
-            #
-            # print("打开图片根目录=文件根目录：")
-            # print(self.fname)
-
-            # print("输出照片名称不带后缀")
-            # print(self.fname_no_suffix)
-            #
-            # print("输出当前文件夹绝对路径")
-            # print(self.fpath)
-            #
-            # print("输出当前文件夹绝对路径不带/")
-            # print(self.fpath_no)
-
             deLists = os.listdir(self.fpath_no)
-            # print("全体图片名")
-            # print(deLists)
             delists_jpg = []
             delete_index = -1
 
             for deList in deLists:
                 index2 = deList.rfind('.')
-                name = deList[index2+1:]
+                name = deList[index2 + 1:]
                 nameF = deList[:index2]
                 if name == "jpg":
-                    # print(name)
                     delists_jpg.append(nameF + '.jpg')
-            # print("图片列表是")
-            # print(delists_jpg)
 
             for deList in deLists:
                 if str(self.fname_no_suffix) in deList:
                     if os.path.exists(str(self.fpath) + str(deList)):
-                        # print("删除文件" + str(self.fpath) + str(deList))
-                        os.remove(str(self.fpath) + str(deList))
-
-                        #获取删除文件下标
+                        self.delete_file_list_names.append(str(self.fpath) + str(deList))
                         for delists_jpg_one in delists_jpg:
                             if self.fname_no_suffix in delists_jpg_one:
                                 delete_index = delists_jpg.index(delists_jpg_one)
-                                # print("获取删除文件")
-                                # print(delists_jpg[delete_index])
-                                # print("next photo name")
-                                # print(delists_jpg[delete_index+1])
-                                self.loadFile(self.fpath + str(delists_jpg[delete_index+1]))
+                                if delete_index < len(delists_jpg) - 1:
+                                    self.loadFile(self.fpath + str(delists_jpg[delete_index + 1]))
+                                else:
+                                    self.loadFile(self.fpath + str(delists_jpg[0]))
                                 break
-
 
     def saveFile(self, _value=False):
         if self.defaultSaveDir is not None and len(ustr(self.defaultSaveDir)):
@@ -1461,7 +1388,7 @@ class MainWindow(QMainWindow, WindowMixin):
         dlg.setOption(QFileDialog.DontUseNativeDialog, False)
         if dlg.exec_():
             fullFilePath = ustr(dlg.selectedFiles()[0])
-            return os.path.splitext(fullFilePath)[0] # Return file path without the extension.
+            return os.path.splitext(fullFilePath)[0]  # Return file path without the extension.
         return ''
 
     def _saveFile(self, annotationFilePath):
@@ -1574,7 +1501,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.set_format(FORMAT_YOLO)
         tYoloParseReader = YoloReader(txtPath, self.image)
         shapes = tYoloParseReader.getShapes()
-        print (shapes)
+        # print (shapes)
         self.loadLabels(shapes)
         self.canvas.verified = tYoloParseReader.verified
 
@@ -1582,6 +1509,7 @@ class MainWindow(QMainWindow, WindowMixin):
         paintLabelsOptionChecked = self.paintLabelsOption.isChecked()
         for shape in self.canvas.shapes:
             shape.paintLabel = paintLabelsOptionChecked
+
 
 def inverted(color):
     return QColor(*[255 - v for v in color.getRgb()])
@@ -1619,6 +1547,6 @@ def main():
     app, _win = get_main_app(sys.argv)
     return app.exec_()
 
+
 if __name__ == '__main__':
     sys.exit(main())
-

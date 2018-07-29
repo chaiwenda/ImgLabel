@@ -4,10 +4,10 @@ block_cipher = None
 
 
 a = Analysis(['labelImg.py'],
-             pathex=['F:\\labelImg-master'],
+             pathex=['F:\\ImgLabel'],
              binaries=[],
              datas=[],
-             hiddenimports=[],
+             hiddenimports=['queue'],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -26,4 +26,4 @@ exe = EXE(pyz,
           strip=False,
           upx=True,
           runtime_tmpdir=None,
-          console=False )
+          console=True )

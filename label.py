@@ -128,16 +128,18 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # For loading all image under a directory
         # 在根目录下加载所有的图片
-        self.mImgList = []
-        self.dirname = None
+        self.mImgList = []  # list of images
+        self.dirname = None #filepath of file
         self.labelHist = []
         self.lastOpenDir = None
         self.fname_dir = ''  # 临时文件名+文件路径
         self.delete_file_name = ''  # 当用open打开时再点击删除时所用到的变量）删除文件名（
+        self.delete_file_list_names = []  # 要删除的文件列表
         self.fname = ''  # 临时文件名
         self.fpath = ''  # 临时文件路径
         self.fname_no_suffix = ''  # 临时文件名无后缀
         self.fpath_prevImg = '' #前一张图片函数变量引用
+
 
         # Whether we need to save or not.
         self.dirty = False
@@ -244,9 +246,11 @@ class MainWindow(QMainWindow, WindowMixin):
         quit = action('&Quit', self.close,
                       'Ctrl+Q', 'quit', u'Quit application')
 
-        open = action('&delete image', self.deleteFile,
-                      'Q', 'delete', u'delete image')
-        open1 = action('&Open', self.openFile,
+        Delete = action('&delete image ', self.deleteFile,
+                      'Q', 'delete', u'append useless image into lists')
+        DeleteFile = action('&Confirm the deletion', self.ConfirmDeleteFiles,
+                      'G', 'delete', u'Confirm the deletion')
+        open = action('&Open', self.openFile,
                       'Ctrl+O', 'open', u'Open image or label file')
 
         opendir = action('&Open Dir', self.openDirDialog,
@@ -365,7 +369,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.popLabelListMenu)
 
         # Store actions for further handling.
-        self.actions = struct(save=save, save_format=save_format, saveAs=saveAs, open=open1, close=close, resetAll = resetAll,
+        self.actions = struct(save=save, save_format=save_format, saveAs=saveAs, open=open, close=close, resetAll=resetAll,
                               lineColor=color1, create=create, delete=delete, edit=edit, copy=copy,
                               createMode=createMode, editMode=editMode, advancedMode=advancedMode,
                               shapeLineColor=shapeLineColor, shapeFillColor=shapeFillColor,
@@ -373,7 +377,7 @@ class MainWindow(QMainWindow, WindowMixin):
                               fitWindow=fitWindow, fitWidth=fitWidth,
                               zoomActions=zoomActions,
                               fileMenuActions=(
-                                  open, opendir, save,open1, saveAs, close, resetAll, quit),
+                                  Delete, opendir, save, open, saveAs, close, resetAll, quit, DeleteFile),
                               beginner=(), advanced=(),
                               editMenu=(edit, copy, delete,
                                         None, color1),
@@ -410,7 +414,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.paintLabelsOption.triggered.connect(self.togglePaintLabelsOption)
 
         addActions(self.menus.file,
-                   (open1, open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
+                   (open, Delete, DeleteFile, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
         addActions(self.menus.help, (help, showInfo))
         addActions(self.menus.view, (
             self.autoSaving,
@@ -431,11 +435,11 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (
-            open1, open, opendir, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
+            open, Delete, DeleteFile, opendir, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
             zoomIn, zoom, zoomOut, fitWindow, fitWidth)
 
         self.actions.advanced = (
-            open1, open, opendir, changeSavedir, openNextImg, openPrevImg, save, save_format, None,
+            open, Delete, DeleteFile, opendir, changeSavedir, openNextImg, openPrevImg, save, save_format, None,
             createMode, editMode, None,
             hideAll, showAll)
 
@@ -1325,6 +1329,8 @@ class MainWindow(QMainWindow, WindowMixin):
             filename = self.mImgList[currIndex + i]
             self.loadFile(filename)
         if filename:
+            print("删除照片列表是：")
+            print(self.delete_file_list_names)
             self.loadFile(filename)
 
 
@@ -1346,6 +1352,16 @@ class MainWindow(QMainWindow, WindowMixin):
             self.delete_file_name = filename
             # print("打开图片函数结束")
 
+    def ConfirmDeleteFiles(self, _value=False):
+        i = 0
+        for delete_file_list_name in  self.delete_file_list_names:
+            if os.path.exists(delete_file_list_name):
+                os.remove(delete_file_list_name)
+                i += 1
+        print("the number of delete file is " + str(i))
+        if i == 0:
+            print("Delete List is null  ")
+
 
     def deleteFile(self, _value=False):
         if self.delete_file_name == '' and self.fname_dir == '':
@@ -1354,13 +1370,15 @@ class MainWindow(QMainWindow, WindowMixin):
             index2 = self.delete_file_name.rfind('/')
             index3 = self.delete_file_name.rfind('.')
             if os.path.exists(self.delete_file_name):
-                os.remove(self.delete_file_name)
+                # os.remove(self.delete_file_name)
+                self.delete_file_list_names.append(self.delete_file_name)
             # print("删除图片下标step1是")
             # print(index2)
             file_path = self.delete_file_name[:index2]
             file_path2 = self.delete_file_name[:index3]  # xml file delete
             if os.path.exists(file_path2 + '.xml'):
-                os.remove(file_path2 + '.xml')
+                self.delete_file_list_names.append(file_path2 + '.xml')
+                # os.remove(file_path2 + '.xml')
             # print("删除图片路径step1是")
             # print(file_path)
             # print("删除图片step1")
@@ -1416,18 +1434,24 @@ class MainWindow(QMainWindow, WindowMixin):
                 if str(self.fname_no_suffix) in deList:
                     if os.path.exists(str(self.fpath) + str(deList)):
                         # print("删除文件" + str(self.fpath) + str(deList))
-                        os.remove(str(self.fpath) + str(deList))
+                        # os.remove(str(self.fpath) + str(deList))
+                        self.delete_file_list_names.append(str(self.fpath) + str(deList))
 
-                        #获取删除文件下标
+                        #获取删除文件下标 打开下一张图片
                         for delists_jpg_one in delists_jpg:
                             if self.fname_no_suffix in delists_jpg_one:
                                 delete_index = delists_jpg.index(delists_jpg_one)
+
                                 # print("获取删除文件")
                                 # print(delists_jpg[delete_index])
                                 # print("next photo name")
                                 # print(delists_jpg[delete_index+1])
-                                self.loadFile(self.fpath + str(delists_jpg[delete_index+1]))
+                                if delete_index < len(delists_jpg)-1:
+                                    self.loadFile(self.fpath + str(delists_jpg[delete_index+1]))
+                                else:
+                                    self.loadFile(self.fpath + str(delists_jpg[0]))
                                 break
+
 
 
     def saveFile(self, _value=False):

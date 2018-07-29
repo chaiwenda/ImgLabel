@@ -22,8 +22,8 @@ def xmlRead(xml_path):
     return xmin, ymin, xmax, ymax
 
 if __name__ == '__main__':
-    rootPath = 'C:\\Users\\lishuli\\Desktop\\Labeled-718-Class5'
-    dstRoot = 'C:\\Users\\lishuli\\Desktop\\Labeled-718-Class5_BoundingBox'
+    rootPath = 'C:\\Users\Administrator\Desktop\\2018729data\Aji'
+    dstRoot = 'C:\\Users\Administrator\Desktop\\2018729data\Aji_rect'
     for (rootPath, rootDirName, rootFileName) in os.walk(rootPath):
 
         for iterRootDir in rootDirName:

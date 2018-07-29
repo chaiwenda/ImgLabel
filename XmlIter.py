@@ -24,7 +24,7 @@ def xmlWrite(xml_path, ObjectName, xml_outputPath):
 
     tree.write(xml_outputPath)
 
-srcRoot = 'F:\QtPython\Data\data2\QingNingShui'
+srcRoot = 'C:/Users/Administrator/Desktop/2018729data'
 # dstRoot = 'C:\\Users\\R09649\\Desktop\\ChangeXml'
 if __name__ == '__main__':
     for (rootPath, rootDirName, rootFileName) in os.walk(srcRoot):

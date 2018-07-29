@@ -1,6 +1,6 @@
 import os
 
-rootPath = 'C:\\Users\Administrator\Desktop\data'
+rootPath = 'C:/Users/Administrator/Desktop/2018729data'
 
 if __name__ == '__main__':
     # start = time.time()
