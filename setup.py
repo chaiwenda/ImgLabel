@@ -11,7 +11,7 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    'PyQt5'  # TODO: Different OS have different requirements
+    'PyQt5', 'np', 'cv2'  # TODO: Different OS have different requirements
 ]
 
 required_packages = find_packages()

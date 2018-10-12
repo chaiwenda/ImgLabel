@@ -4,6 +4,7 @@ import distutils.spawn
 import os.path
 import platform
 import re
+import xml.etree.ElementTree as ET
 import sys
 import subprocess
 
@@ -898,6 +899,10 @@ class MainWindow(QMainWindow, WindowMixin):
         self.setZoom(self.zoomWidget.value() + increment)
 
     def zoomRequest(self, delta):
+
+        self.setZoom(self.zoomWidget.value() + increment)
+
+    def zoomRequest(self, delta):
         # get the current scrollbar positions
         # calculate the percentages ~ coordinates
         h_bar = self.scrollBars[Qt.Horizontal]
@@ -934,7 +939,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # zoom in
         units = delta / (8 * 15)
-        scale = 10
+        scale = 35
         self.addZoom(scale * units)
 
         # get the difference in scrollbar values
@@ -1057,6 +1062,20 @@ class MainWindow(QMainWindow, WindowMixin):
             self.canvas.setFocus(True)
             return True
         return False
+
+    def xmlRead(xml_path):
+    # 获取xml信息
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        for Object in root.findall('object'):
+            bndbox = Object.find('bndbox')
+            xmin = int(bndbox.find('xmin').text)
+            ymin = int(bndbox.find('ymin').text)
+            xmax = int(bndbox.find('xmax').text)
+            ymax = int(bndbox.find('ymax').text)
+            xml_index_lists = [xmin, ymin, xmax, ymax]
+
+        return xml_index_lists
 
     def resizeEvent(self, event):
         if self.canvas and not self.image.isNull() \
@@ -1324,6 +1343,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 # os.remove(file_path2 + '.xml')
             self.delete_file_name = ''
             self.loadFile("")
+            self.ConfirmDeleteFiles()
 
         else:
             index = self.fname_dir.rfind('\\')
@@ -1356,6 +1376,7 @@ class MainWindow(QMainWindow, WindowMixin):
                                 else:
                                     self.loadFile(self.fpath + str(delists_jpg[0]))
                                 break
+            self.ConfirmDeleteFiles()
 
     def saveFile(self, _value=False):
         if self.defaultSaveDir is not None and len(ustr(self.defaultSaveDir)):
@@ -1531,7 +1552,7 @@ def get_main_app(argv=[]):
     app = QApplication(argv)
     app.setApplicationName(__appname__)
     app.setWindowIcon(newIcon("app"))
-    # Tzutalin 201705+: Accept extra agruments to change predefined class file
+    # Tzutalin 201705+: Accept extra agruments to change predefined class filea
     # Usage : labelImg.py image predefClassFile saveDir
     win = MainWindow(argv[1] if len(argv) >= 2 else None,
                      argv[2] if len(argv) >= 3 else os.path.join(

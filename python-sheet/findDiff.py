@@ -1,6 +1,10 @@
 import os
 
-rootPath = 'C:/Users/Administrator/Desktop/2018729data'
+"""
+查询jpg与xml文件是否一一对应 
+"""
+
+rootPath = 'F:\\ruijie\\1010_extra_data'
 
 if __name__ == '__main__':
     # start = time.time()
@@ -30,4 +34,23 @@ if __name__ == '__main__':
                     print(errorFile)
 
             localValue = list(set(set(orgImageNamesList).difference(set(xmlNameList))).union(set(set(xmlNameList).difference(set(orgImageNamesList)))))
-            print(localValue)
+            if len(localValue) != 0:
+                for item in localValue:
+                    print("==================")
+                    print(item)
+                    print("==================")
+                print("[")
+                for item in localValue:
+                    index = item.rfind('_')
+                    delete_file_jpg_name = str(eachRootDirPath) + "\\" + str(item) + ".jpg"
+                    delete_file_xml_name = str(eachRootDirPath) + "\\" + str(item) + ".xml"
+                    if os.path.exists(delete_file_jpg_name):
+                        os.remove(delete_file_jpg_name)
+                        print(delete_file_jpg_name),
+                    if os.path.exists(delete_file_xml_name):
+                        os.remove(delete_file_xml_name)
+                        print(delete_file_xml_name),
+                print("]")
+            else:
+                print("[]")
+

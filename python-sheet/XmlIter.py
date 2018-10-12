@@ -1,5 +1,8 @@
 import os
 import xml.etree.ElementTree as ET
+"""
+校验xml文件与类是否一致
+"""
 
 def xmlRead(xml_path):
 
@@ -24,7 +27,7 @@ def xmlWrite(xml_path, ObjectName, xml_outputPath):
 
     tree.write(xml_outputPath)
 
-srcRoot = 'C:/Users/Administrator/Desktop/2018729data'
+srcRoot = 'F:\\ruijie\\1010_extra_data'
 # dstRoot = 'C:\\Users\\R09649\\Desktop\\ChangeXml'
 if __name__ == '__main__':
     for (rootPath, rootDirName, rootFileName) in os.walk(srcRoot):
